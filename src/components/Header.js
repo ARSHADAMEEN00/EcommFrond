@@ -6,7 +6,7 @@ const Header = () => {
     <header style={{ backgroundColor: "grey" }} className=" flex-r">
       <div className="logo">
         <Link to="/">
-          <h1>PROSHOP</h1>
+          <h1>MYSHOP</h1>
         </Link>
       </div>
 
