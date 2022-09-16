@@ -6,82 +6,62 @@ import { register } from "../actions/userActions";
 import { saveShippingAddress } from "../actions/cartActions";
 import CheckoutSteps from "../components/CheckoutSteps";
 import { Link } from "react-router-dom";
-import { createOrder } from "../actions/orderActions";
+import { createOrder, getOrderDetails } from "../actions/orderActions";
 import { useEffect } from "react";
 
-const PlaceOrderScreen = ({history}) => {
+const OrderScreen = ({history, match}) => {
     const dispatch = useDispatch()
-  const cart = useSelector((state) => state.cart);
+  const orderDetails= useSelector(state => state.orderDetails)
+  const {order, loading, error} = orderDetails;
 
-  const addDecimal = (num) => {
-    return (Math.round(num * 100)/ 100).toFixed(2);
-  }
-
-  cart.itemsPrice = addDecimal(cart.cartItems.reduce((a, b) => a + b.price * b.qty, 0))
-  cart.shippingPrice = addDecimal( cart.itemsPrice > 100 ? 0 : 20)
-  cart.taxPrice = addDecimal(Number( 0.05 * cart.itemsPrice).toFixed(2))
-  cart.totalPrice = (Number(cart.itemsPrice) + Number(cart.shippingPrice) + Number(cart.taxPrice)).toFixed(2)
-
-
-  const createOrderSelect = useSelector(state => state.orderCreate)
-  const {order, success, error} = createOrderSelect;
-
-  console.log(success);
-  console.log(order);
-console.log(createOrderSelect);
-
+console.log(order);
   useEffect(() => {
-    if (success) {
-        history.push(`/order/${createOrderSelect.order.createdOrder?._id}`)
+    if (!order || order.Id !== match.params.id) {
+        dispatch(getOrderDetails(match.params.id))
     }
-  }, [history, order])
+  
+  }, [dispatch, match.params.id])
 
-  const placeOrderhandler = (e) => {
-    dispatch(createOrder({
-        orderItems: cart.cartItems,
-        shippingAddress: cart.shippingAddress,
-        paymentMethod: cart.paymentMethod,
-        itemsPrice: cart.itemsPrice,
-        shippingPrice: cart.shippingPrice,
-        taxPrice: cart.taxPrice,
-        totalPrice: cart.totalPrice,
-  }))
-
-  // history.push('/')
-  };
+if (!loading) {
+  order.itemsPrice = order?.orderItems.reduce((a,b) => a + b.price,0 )
+}
 
   return (
     <div>
-      <CheckoutSteps step1 step2 step3 step4 />
-
-      <div>
+        {loading ? <Loader /> : <div>
+    <h1>Order ID: {order?._id}</h1>
+    <h3>user: {order.user.name}</h3>
+    
+    <div>
         <div>
           <ul>
             <li>
               <h2>Shipping</h2>
               <p>
                 <strong>Address:</strong>
-                {cart.shippingAddress.address}, {cart.shippingAddress.city},{" "}
-                {cart.shippingAddress.postalCode},{" "}
-                {cart.shippingAddress.country}
+                {order?.shippingAddress.address}, {order?.shippingAddress.city},{" "}
+                {order?.shippingAddress.postalCode},{" "}
+                {order?.shippingAddress.country}
               </p>
+              {order.isDelivered ? <h2>Paid on {order.DeliveredAt}</h2> : <h2>Not Delivers</h2> }
             </li>
 
             <li>
               <h2>Payment Method</h2>
               <p>
-                <strong>Method: </strong> {cart.paymentMethod}
+                <strong>Method: </strong> {order?.paymentMethod}
               </p>
+              {order.isPaid ? <h2>Paid on {order.paidAt}</h2> : <h2>Not paid</h2> }
             </li>
 
             <li>
-              <h2>Order Items</h2>
-              {cart.cartItems.length === 0 ? (
+              <h2>order Items</h2>
+              {order?.orderItems.length === 0 ? (
                 <h1>cart empty</h1>
               ) : (
                 <div>
                   <div>
-                    {cart.cartItems.map((item, index) => {
+                    {order?.orderItems.map((item, index) => {
                       return (
                         <div
                           style={{
@@ -123,38 +103,35 @@ console.log(createOrderSelect);
 
             <p>
               <h3>Items</h3>
-              <h3>${cart.itemsPrice}</h3>
+              <h3>${order?.itemsPrice}</h3>
             </p>
 
             <p>
               <h3>shipping</h3>
-              <h3>${cart.shippingPrice}</h3>
+              <h3>${order?.shippingPrice}</h3>
             </p>
 
             <p>
               <h3>Tax</h3>
-              <h3>${cart.taxPrice}</h3>
+              <h3>${order?.taxPrice}</h3>
             </p>
 
             <p>
               <h3>Total</h3>
-              <h3>${cart.totalPrice}</h3>
+              <h3>${order?.totalPrice}</h3>
             </p>
 
             <div>
             {error ? <h1>{error}</h1> : '' }
-              <button
-                disabled={cart.cartItems === 0}
-                onClick={placeOrderhandler}
-              >
-                Place order
-              </button>
+             
             </div>
           </div>
         </div>
       </div>
+
+        </div> }
     </div>
-  );
+  )
 };
 
-export default PlaceOrderScreen;
+export default OrderScreen
