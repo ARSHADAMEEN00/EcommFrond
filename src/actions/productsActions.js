@@ -11,14 +11,18 @@ export const getProducts = () => async (dispatch) => {
       type: GET_PRODUCTS_REQUEST,
     });
 
-    const { data } = await axios.get("/api/products");
+    // const { data } = await axios.get("/api/products");
+    const data = {
+        name: "data",
+        price: "32"
+    }
     // console.log(data);
 
     dispatch({
       type: GET_PRODUCTS_SUCCESS,
       payload: data,
     });
-    
+
   } catch (error) {
     dispatch({
       type: GET_PRODUCTS_FAIL,
